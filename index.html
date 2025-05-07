@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mission Control Game</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #0a0a23, #1a1a4e);
+            color: #e0e0ff;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        header {
+            background: rgba(0, 0, 50, 0.95);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #00f2fe;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+        }
+        header h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8em;
+            color: #00f2fe;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+        #fullscreen-btn {
+            background: linear-gradient(45deg, #00f2fe, #4facfe);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            color: #fff;
+            font-family: 'Orbitron', sans-serif;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        #fullscreen-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 255, 0.6);
+        }
+        #control-panel {
+            display: flex;
+            flex: 1;
+        }
+        #sidebar {
+            width: 350px;
+            background: linear-gradient(180deg, rgba(20, 20, 50, 0.95), rgba(40, 40, 80, 0.95));
+            padding: 20px;
+            border-right: 1px solid rgba(0, 255, 255, 0.3);
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            overflow-y: auto;
+        }
+        #map-container {
+            flex: 1;
+            position: relative;
+        }
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .control-group label {
+            font-size: 0.9em;
+            color: #b0b0ff;
+            letter-spacing: 1px;
+        }
+        button, select {
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(45deg, #00f2fe, #4facfe);
+            color: #fff;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1em;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s, background 0.3s;
+        }
+        button:hover, select:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 255, 0.6);
+            background: linear-gradient(45deg, #4facfe, #00f2fe);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        button:disabled {
+            background: #555;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        select {
+            appearance: none;
+            background-image: url('data:image/svg+xml;utf8,<svg fill="white" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+            background-repeat: no-repeat;
+            background-position: right 10px top 50%;
+            padding-right: 30px;
+        }
+        #status {
+            background: rgba(0, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.1em;
+            color: #00f2fe;
+            animation: pulse 3s infinite;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+        }
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            padding: 10px;
+            background: rgba(0, 0, 50, 0.5);
+            border-radius: 10px;
+        }
+        .dashboard label {
+            font-size: 0.9em;
+            color: #e0e0ff;
+        }
+        .dashboard span {
+            font-family: 'Orbitron', sans-serif;
+            color: #00f2fe;
+        }
+        .bomb-counter, .score-counter, .credits-counter {
+            font-size: 1em;
+            color: #e0e0ff;
+            text-align: center;
+        }
+        .bomb-counter span, .score-counter span, .credits-counter span {
+            color: #00f2fe;
+            font-family: 'Orbitron', sans-serif;
+        }
+        .upgrade-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 10px;
+            background: rgba(0, 0, 50, 0.5);
+            border-radius: 10px;
+        }
+        .upgrade-group h3 {
+            font-family: 'Orbitron', sans-serif;
+            color: #00f2fe;
+            font-size: 1.2em;
+            margin: 0;
+        }
+        .upgrade-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9em;
+        }
+        h2 {
+            font-family: 'Orbitron', sans-serif;
+            color: #00f2fe;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: 1.5em;
+        }
+        @keyframes pulse {
+            0% { background: rgba(0, 255, 255, 0.1); }
+            50% { background: rgba(0, 255, 255, 0.2); }
+            100% { background: rgba(0, 255, 255, 0.1); }
+        }
+        @keyframes explosion {
+            0% {
+                transform: scale(0);
+                opacity: 1;
+                background: radial-gradient(circle, rgba(255, 255, 200, 1) 0%, rgba(255, 150, 0, 1) 40%, rgba(200, 50, 0, 0.7) 70%, rgba(50, 50, 50, 0.3) 100%);
+                box-shadow: 0 0 40px rgba(255, 150, 0, 0.9), inset 0 0 15px rgba(255, 255, 255, 0.6);
+            }
+            50% {
+                transform: scale(2.5);
+                opacity: 0.8;
+                background: radial-gradient(circle, rgba(255, 200, 50, 0.8) 0%, rgba(255, 100, 0, 0.6) 50%, rgba(150, 50, 0, 0.4) 80%, rgba(50, 50, 50, 0.2) 100%);
+                box-shadow: 0 0 25px rgba(255, 100, 0, 0.7);
+            }
+            100% {
+                transform: scale(5);
+                opacity: 0;
+                background: radial-gradient(circle, rgba(255, 200, 50, 0) 0%, rgba(255, 100, 0, 0) 100%);
+                box-shadow: none;
+            }
+        }
+        .explosion {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1000;
+            animation: explosion 1.2s ease-out forwards;
+        }
+        .vehicle {
+            transition: transform 0.1s ease;
+            transform-origin: center center;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Mission Control Game</h1>
+        <button id="fullscreen-btn">Toggle Fullscreen</button>
+    </header>
+    <div id="control-panel">
+        <div id="sidebar">
+            <h2>Command Center</h2>
+            <div class="score-counter">Score: <span id="score">0</span></div>
+            <div class="credits-counter">Credits: <span id="credits">0</span></div>
+            <div class="control-group">
+                <label>Vehicle Selection</label>
+                <select id="vehicle-type" onchange="updateVehicleType()">
+                    <option value="standard">Standard Rocket</option>
+                    <option value="heavy">Heavy Rocket</option>
+                    <option value="stealth">Stealth Rocket</option>
+                    <option value="bomber">Bomber Plane</option>
+                </select>
+            </div>
+            <div class="control-group" id="rocket-controls">
+                <button onclick="launchRocket()">Initiate Launch</button>
+                <button onclick="abortMission()">Abort Mission</button>
+            </div>
+            <div class="control-group" id="bomber-controls" style="display: none;">
+                <button onclick="launchBomber()">Launch Bomber</button>
+                <p style="font-size: 0.9em; color: #b0b0ff;">Controls: WASD to move, Space to drop bomb</p>
+            </div>
+            <div class="control-group" id="thrust-control">
+                <label>Thrust Control</label>
+                <input type="range" id="thrust" min="0" max="100" value="50" oninput="updateThrust(this.value)">
+            </div>
+            <div class="dashboard">
+                <label>Altitude: <span id="altitude">0</span> km</label>
+                <label>Speed: <span id="speed">0</span> km/h</label>
+                <label id="bomb-counter" class="bomb-counter" style="grid-column: span 2; display: none;">Bombs: <span id="bomb-count">5</span></label>
+            </div>
+            <div class="upgrade-group">
+                <h3>Upgrades</h3>
+                <div class="upgrade-item">
+                    <span>Max Speed (+100 km/h)</span>
+                    <button onclick="upgradeSpeed()" id="speed-upgrade-btn">100 Credits</button>
+                </div>
+                <div class="upgrade-item">
+                    <span>Explosion Size (+10px)</span>
+                    <button onclick="upgradeExplosion()" id="explosion-upgrade-btn">150 Credits</button>
+                </div>
+                <div class="upgrade-item" id="bomb-upgrade" style="display: none;">
+                    <span>Bomb Capacity (+1)</span>
+                    <button onclick="upgradeBombs()" id="bomb-upgrade-btn">200 Credits</button>
+                </div>
+            </div>
+            <div id="status">Status: Idle</div>
+        </div>
+        <div id="map-container">
+            <div id="map"></div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Initialize Leaflet Map
+        const map = L.map('map').setView([28.5733, -80.6490], 10); // Kennedy Space Center
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Launch Area (Kennedy Space Center)
+        const launchPosition = [28.5733, -80.6490];
+
+        // Vehicle Icons
+        const vehicleIcons = {
+            standard: L.divIcon({
+                html: `<img src="https://img.icons8.com/ios-filled/50/ffffff/rocket.png" style="width: 30px; height: 30px;" class="vehicle">`,
+                className: '',
+                iconSize: [30, 30],
+                iconAnchor: [15, 15]
+            }),
+            heavy: L.divIcon({
+                html: `<img src="https://img.icons8.com/ios-filled/50/ffffff/space-shuttle.png" style="width: 40px; height: 40px;" class="vehicle">`,
+                className: '',
+                iconSize: [40, 40],
+                iconAnchor: [20, 20]
+            }),
+            stealth: L.divIcon({
+                html: `<img src="https://img.icons8.com/ios-filled/50/ffffff/fighter-jet.png" style="width: 30px; height: 30px;" class="vehicle">`,
+                className: '',
+                iconSize: [30, 30],
+                iconAnchor: [15, 15]
+            }),
+            bomber: L.divIcon({
+                html: `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M22 6.5L12 3L2 6.5V9.5L12 13L22 9.5V6.5Z" fill="white"/>
+                    <path d="M12 13L9 16H15L12 13Z" fill="white"/>
+                    <path d="M7 9L5 12H9L7 9Z" fill="white"/>
+                    <path d="M17 9L15 12H19L17 9Z" fill="white"/>
+                </svg>`,
+                className: 'vehicle',
+                iconSize: [40, 40],
+                iconAnchor: [20, 20]
+            })
+        };
+        let currentVehicleIcon = vehicleIcons.standard;
+        let vehicleMarker = L.marker(launchPosition, { icon: currentVehicleIcon }).addTo(map);
+
+        // Target Marker
+        const targetIcon = L.divIcon({
+            html: `
+                <svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="15" cy="15" r="10" fill="red" fill-opacity="0.5" stroke="white" stroke-width="2"/>
+                    <line x1="15" y1="5" x2="15" y2="25" stroke="white" stroke-width="2"/>
+                    <line x1="5" y1="15" x2="25" y2="15" stroke="white" stroke-width="2"/>
+                </svg>`,
+            className: '',
+            iconSize: [30, 30],
+            iconAnchor: [15, 15]
+        });
+        let targetMarker = null;
+
+        // Map Click Event for Selecting Target
+        map.on('click', function(e) {
+            if (targetMarker) {
+                map.removeLayer(targetMarker);
+            }
+            targetMarker = L.marker(e.latlng, { icon: targetIcon }).addTo(map);
+            targetMarker.bindPopup(`Target: [${e.latlng.lat.toFixed(2)}, ${e.latlng.lng.toFixed(2)}]`).openPopup();
+        });
+
+        // Fullscreen Toggle
+        document.getElementById('fullscreen-btn').addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else if (document.exitFullscreen) {
+                document.exitFullscreen();
+            }
+        });
+
+        let isLaunched = false;
+        let isExploding = false;
+        let isBomberActive = false;
+        let altitude = 0;
+        let speed = 0;
+        let position = [...launchPosition];
+        let targetPosition = null;
+        let flightPath = null;
+        let previousPosition = [...launchPosition];
+        let bomberDirection = 0;
+        let bomberSpeed = 0;
+        let bombCount = 5;
+        let score = 0;
+        let credits = 0;
+        let keysPressed = {};
+
+        // Vehicle Type Properties with Upgrades
+        const vehicleTypes = {
+            standard: { speedFactor: 1, explosionSize: 60, maxSpeed: 2000, type: 'rocket', bombCapacity: 0 },
+            heavy: { speedFactor: 0.8, explosionSize: 90, maxSpeed: 1500, type: 'rocket', bombCapacity: 0 },
+            stealth: { speedFactor: 1.2, explosionSize: 40, maxSpeed: 2500, type: 'rocket', bombCapacity: 0 },
+            bomber: { speedFactor: 0.5, explosionSize: 70, maxSpeed: 900, type: 'bomber', bombCapacity: 5 }
+        };
+        let currentVehicleType = 'standard';
+
+        // Update Vehicle Type
+        function updateVehicleType() {
+            currentVehicleType = document.getElementById('vehicle-type').value;
+            currentVehicleIcon = vehicleIcons[currentVehicleType];
+            vehicleMarker.setIcon(currentVehicleIcon);
+            if (vehicleTypes[currentVehicleType].type === 'bomber') {
+                document.getElementById('rocket-controls').style.display = 'none';
+                document.getElementById('bomber-controls').style.display = 'block';
+                document.getElementById('thrust-control').style.display = 'none';
+                document.getElementById('bomb-counter').style.display = 'block';
+                document.getElementById('bomb-upgrade').style.display = 'block';
+                bombCount = vehicleTypes.bomber.bombCapacity;
+                document.getElementById('bomb-count').textContent = bombCount;
+            } else {
+                document.getElementById('rocket-controls').style.display = 'block';
+                document.getElementById('bomber-controls').style.display = 'none';
+                document.getElementById('thrust-control').style.display = 'block';
+                document.getElementById('bomb-counter').style.display = 'none';
+                document.getElementById('bomb-upgrade').style.display = 'none';
+            }
+        }
+
+        // Update Status
+        function updateStatus(message) {
+            document.getElementById('status').textContent = `Status: ${message}`;
+        }
+
+        // Update Game Stats
+        function updateGameStats() {
+            document.getElementById('score').textContent = score;
+            document.getElementById('credits').textContent = credits;
+            document.getElementById('speed-upgrade-btn').disabled = credits < 100;
+            document.getElementById('explosion-upgrade-btn').disabled = credits < 150;
+            document.getElementById('bomb-upgrade-btn').disabled = credits < 200 || vehicleTypes[currentVehicleType].type !== 'bomber';
+        }
+
+        // Create Explosion Animation
+        function createExplosion(lat, lng, size) {
+            isExploding = true;
+            const point = map.latLngToContainerPoint([lat, lng]);
+            const explosion = document.createElement('div');
+            explosion.className = 'explosion';
+            explosion.style.width = `${size}px`;
+            explosion.style.height = `${size}px`;
+            explosion.style.left = `${point.x - size / 2}px`;
+            explosion.style.top = `${point.y - size / 2}px`;
+            document.getElementById('map-container').appendChild(explosion);
+            explosion.addEventListener('animationend', () => {
+                explosion.remove();
+                isExploding = false;
+                if (!isBomberActive && !isLaunched) {
+                    position = [...launchPosition];
+                    vehicleMarker.setLatLng(position);
+                    vehicleMarker._icon.style.transform = `rotate(0deg)`;
+                }
+            });
+            // Score and Credits
+            if (targetMarker) {
+                const distanceToTarget = map.distance([lat, lng], targetMarker.getLatLng());
+                if (distanceToTarget < 10000) { // Within ~10km
+                    score += 100;
+                    credits += 50;
+                    updateGameStats();
+                }
+            }
+        }
+
+        // Calculate Bearing
+        function calculateBearing(start, end) {
+            const startLat = start[0] * Math.PI / 180;
+            const startLng = start[1] * Math.PI / 180;
+            const endLat = end[0] * Math.PI / 180;
+            const endLng = end[1] * Math.PI / 180;
+            const dLng = endLng - startLng;
+            const y = Math.sin(dLng) * Math.cos(endLat);
+            const x = Math.cos(startLat) * Math.sin(endLat) - Math.sin(startLat) * Math.cos(endLat) * Math.cos(dLng);
+            let bearing = Math.atan2(y, x) * 180 / Math.PI;
+            bearing = (bearing + 360) % 360;
+            return bearing;
+        }
+
+        // Upgrades
+        function upgradeSpeed() {
+            if (credits >= 100) {
+                vehicleTypes[currentVehicleType].maxSpeed += 100;
+                credits -= 100;
+                updateGameStats();
+                updateStatus('Speed Upgraded!');
+            }
+        }
+
+        function upgradeExplosion() {
+            if (credits >= 150) {
+                vehicleTypes[currentVehicleType].explosionSize += 10;
+                credits -= 150;
+                updateGameStats();
+                updateStatus('Explosion Size Upgraded!');
+            }
+        }
+
+        function upgradeBombs() {
+            if (credits >= 200 && vehicleTypes[currentVehicleType].type === 'bomber') {
+                vehicleTypes.bomber.bombCapacity += 1;
+                bombCount = vehicleTypes.bomber.bombCapacity;
+                document.getElementById('bomb-count').textContent = bombCount;
+                credits -= 200;
+                updateGameStats();
+                updateStatus('Bomb Capacity Upgraded!');
+            }
+        }
+
+        // Rocket Launch
+        function launchRocket() {
+            if (!isLaunched && targetMarker && !isExploding) {
+                isLaunched = true;
+                targetPosition = [targetMarker.getLatLng().lat, targetMarker.getLatLng().lng];
+                position = [...launchPosition];
+                previousPosition = [...launchPosition];
+                vehicleMarker.setLatLng(position);
+                updateStatus('Rocket Launched');
+                if (flightPath) map.removeLayer(flightPath);
+                flightPath = L.polyline([position, targetPosition], {
+                    color: '#00f2fe',
+                    weight: 2,
+                    dashArray: '5, 10'
+                }).addTo(map);
+                simulateRocketFlight();
+            } else if (!targetMarker) {
+                updateStatus('Select a target first!');
+            } else if (isExploding) {
+                updateStatus('Wait for explosion to finish!');
+            }
+        }
+
+        // Abort Mission
+        function abortMission() {
+            if (isExploding) return;
+            isLaunched = false;
+            isBomberActive = false;
+            altitude = 0;
+            speed = 0;
+            bombCount = vehicleTypes[currentVehicleType].bombCapacity || 5;
+            position = [...launchPosition];
+            previousPosition = [...launchPosition];
+            targetPosition = null;
+            vehicleMarker.setLatLng(position);
+            createExplosion(position[0], position[1], vehicleTypes[currentVehicleType].explosionSize);
+            updateStatus('Mission Aborted');
+            if (flightPath) map.removeLayer(flightPath);
+            vehicleMarker._icon.style.transform = `rotate(0deg)`;
+            updateDashboard();
+            removeBomberControls();
+            document.getElementById('bomb-count').textContent = bombCount;
+            updateGameStats();
+        }
+
+        // Update Thrust
+        function updateThrust(value) {
+            if (isLaunched) {
+                speed = (value / 100) * vehicleTypes[currentVehicleType].maxSpeed;
+                updateDashboard();
+            }
+        }
+
+        // Update Dashboard
+        function updateDashboard() {
+            document.getElementById('altitude').textContent = altitude.toFixed(1);
+            document.getElementById('speed').textContent = speed.toFixed(1);
+        }
+
+        // Simulate Rocket Flight
+        function simulateRocketFlight() {
+            if (!isLaunched || !targetPosition || isExploding) return;
+
+            const deltaLat = targetPosition[0] - position[0];
+            const deltaLng = targetPosition[1] - position[1];
+            const distance = Math.sqrt(deltaLat ** 2 + deltaLng ** 2);
+
+            const velocityBearing = calculateBearing(previousPosition, position);
+            if (distance > 0.005) {
+                vehicleMarker._icon.style.transform = `rotate(${velocityBearing}deg)`;
+            }
+
+            const speedFactor = (speed / vehicleTypes[currentVehicleType].maxSpeed) * vehicleTypes[currentVehicleType].speedFactor * 0.01;
+            const maxStep = 0.05;
+            if (distance > 0.005) {
+                const moveLat = (deltaLat / distance) * Math.min(speedFactor, maxStep);
+                const moveLng = (deltaLng / distance) * Math.min(speedFactor, maxStep);
+                previousPosition = [...position];
+                position[0] += moveLat;
+                position[1] += moveLng;
+
+                const totalDistance = map.distance(launchPosition, targetPosition) / 1000;
+                const currentDistance = map.distance(launchPosition, position) / 1000;
+                const maxAltitude = totalDistance * 100;
+                altitude = maxAltitude * Math.sin((currentDistance / totalDistance) * Math.PI);
+                speed = Math.min(speed + 10, vehicleTypes[currentVehicleType].maxSpeed);
+            } else {
+                isLaunched = false;
+                createExplosion(targetPosition[0], targetPosition[1], vehicleTypes[currentVehicleType].explosionSize);
+                updateStatus('Target Destroyed!');
+                altitude = 0;
+                speed = 0;
+                targetPosition = null;
+                if (flightPath) map.removeLayer(flightPath);
+            }
+
+            vehicleMarker.setLatLng(position);
+            map.panTo(position);
+            updateDashboard();
+            setTimeout(simulateRocketFlight, 50);
+        }
+
+        // Bomber Controls
+        function launchBomber() {
+            if (!isBomberActive && !isExploding) {
+                isBomberActive = true;
+                position = [...launchPosition];
+                previousPosition = [...launchPosition];
+                bomberSpeed = vehicleTypes.bomber.maxSpeed * 0.3;
+                altitude = 10;
+                bombCount = vehicleTypes.bomber.bombCapacity;
+                vehicleMarker.setLatLng(position);
+                updateStatus('Bomber Launched');
+                document.getElementById('bomb-count').textContent = bombCount;
+                addBomberControls();
+                simulateBomberFlight();
+            } else if (isExploding) {
+                updateStatus('Wait for explosion to finish!');
+            }
+        }
+
+        function dropBomb() {
+            if (isBomberActive && !isExploding && bombCount > 0) {
+                createExplosion(position[0], position[1], vehicleTypes.bomber.explosionSize);
+                bombCount--;
+                document.getElementById('bomb-count').textContent = bombCount;
+                updateStatus('Bomb Dropped!');
+                if (bombCount === 0) {
+                    updateStatus('Bomber Out of Bombs!');
+                }
+            }
+        }
+
+        function addBomberControls() {
+            document.addEventListener('keydown', handleBomberKeyDown);
+            document.addEventListener('keyup', handleBomberKeyUp);
+        }
+
+        function removeBomberControls() {
+            document.removeEventListener('keydown', handleBomberKeyDown);
+            document.removeEventListener('keyup', handleBomberKeyUp);
+            keysPressed = {};
+        }
+
+        function handleBomberKeyDown(e) {
+            if (!isBomberActive) return;
+            e.preventDefault(); // Prevent default browser actions
+            keysPressed[e.key.toLowerCase()] = true;
+            if (e.key === ' ') {
+                dropBomb();
+            }
+        }
+
+        function handleBomberKeyUp(e) {
+            if (!isBomberActive) return;
+            e.preventDefault();
+            delete keysPressed[e.key.toLowerCase()];
+        }
+
+        function simulateBomberFlight() {
+            if (!isBomberActive || isExploding) return;
+
+            let acceleration = 0;
+            let turnSpeed = 4;
+
+            // Smooth acceleration and deceleration
+            if (keysPressed['w']) {
+                acceleration = 8;
+            } else if (keysPressed['s']) {
+                acceleration = -8;
+            } else {
+                // Gradual deceleration when no input
+                bomberSpeed *= 0.98;
+            }
+
+            // Smooth turning
+            if (keysPressed['a']) {
+                bomberDirection = (bomberDirection - turnSpeed + 360) % 360;
+            }
+            if (keysPressed['d']) {
+                bomberDirection = (bomberDirection + turnSpeed) % 360;
+            }
+
+            bomberSpeed = Math.max(0, Math.min(bomberSpeed + acceleration, vehicleTypes.bomber.maxSpeed));
+            const rad = bomberDirection * Math.PI / 180;
+            const speedFactor = (bomberSpeed / vehicleTypes.bomber.maxSpeed) * vehicleTypes.bomber.speedFactor * 0.02;
+            previousPosition = [...position];
+            position[0] += Math.sin(rad) * speedFactor;
+            position[1] += Math.cos(rad) * speedFactor;
+
+            vehicleMarker._icon.style.transform = `rotate(${bomberDirection - 90}deg)`; // Adjust for SVG orientation
+            vehicleMarker.setLatLng(position);
+            map.panTo(position);
+
+            speed = bomberSpeed;
+            updateDashboard();
+            requestAnimationFrame(simulateBomberFlight); // Use requestAnimationFrame for smoother updates
+        }
+
+        // Initialize
+        updateGameStats();
+    </script>
+</body>
+</html>
