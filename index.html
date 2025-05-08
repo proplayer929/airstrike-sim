@@ -6,10 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>World of War</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-        integrity="sha512-Zcn6bjR/8NREWgB1cyaL7WlsLox2F3ox2HdxmM05m0Y9gPCRXg1o3s3oH5vn3mFpcG+7R2z5YDsBxmND+uL2i1A=="
         crossorigin="" />
     <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha512-+JqUftuGTpY7Z8N+UETu1q+4WF1MZ4M4WCaC3zC2CrW6QMJ2mPZNCGETZ8jDot1rJ1t2xT3vD4nhhwcUsjoYpAA=="
         crossorigin=""></script>
     <style>
         body {
@@ -216,7 +214,6 @@
     <script>
         if (typeof L === 'undefined') {
             alert('Failed to load Leaflet library. Please check your internet connection and try again.');
-            return;
         }
 
         const titleScreen = document.getElementById('title-screen');
