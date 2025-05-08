@@ -175,9 +175,9 @@
 <body>
     <div id="title-screen">
         <h1>World of War</h1>
-        <button>Play</button>
-        <button>Shop</button>
-        <button>Settings</button>
+        <button id="playBtn">Play</button>
+        <button id="shopBtn">Shop</button>
+        <button id="settingsBtn">Settings</button>
     </div>
     <div id="shop-screen" style="display: none;">
         <h1>Shop</h1>
@@ -306,10 +306,9 @@
                 </svg>`;
 
         // Add event listeners for title screen buttons
-        const titleButtons = document.querySelectorAll('#title-screen button');
-        titleButtons[0].addEventListener('click', startGame); // Play
-        titleButtons[1].addEventListener('click', showShop); // Shop
-        titleButtons[2].addEventListener('click', () => alert('Settings not implemented')); // Settings
+        document.getElementById('playBtn').addEventListener('click', startGame); // Play
+        document.getElementById('shopBtn').addEventListener('click', showShop); // Shop
+        document.getElementById('settingsBtn').addEventListener('click', () => alert('Settings not implemented')); // Settings
 
         // Add event listeners for shop screen buttons
         const shopButtons = document.querySelectorAll('#shop-screen button');
