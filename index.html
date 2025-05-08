@@ -7,7 +7,7 @@
     <title>World of War</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         crossorigin="" />
-    <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         crossorigin=""></script>
     <style>
         body {
@@ -211,7 +211,7 @@
         <div id="map"></div>
     </div>
 
-    <script>
+    <script defer>
         if (typeof L === 'undefined') {
             alert('Failed to load Leaflet library. Please check your internet connection and try again.');
         }
